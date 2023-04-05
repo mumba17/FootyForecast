@@ -1,8 +1,12 @@
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 import os
 from termcolor import colored
+from sklearn.utils._testing import ignore_warnings
+from sklearn.exceptions import ConvergenceWarning
 
 os.system('color')
+
+@ignore_warnings(category=ConvergenceWarning)
 def compare_models(model1, model2, X_test, y_test):
     """
     Compare two classification models using precision, recall, F1 score and accuracy metrics.
@@ -55,7 +59,7 @@ def compare_models(model1, model2, X_test, y_test):
     print(f"Accuracy: {accuracy2:.4f}")
     
     if f1_score1 > f1_score2:
-        print(colored("Replacing the model!"), "green")
+        print(colored("Replacing the model!", "green"))
         return True
     else:
         print(colored("Not replacing the model.", "red"))
