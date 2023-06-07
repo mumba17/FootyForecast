@@ -9,7 +9,7 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.ensemble import RandomForestClassifier
 
-df = pd.read_csv('dataset_eredivisie_v4.csv', on_bad_lines='skip')
+df = pd.read_csv('dataset_footyf_v1.csv', on_bad_lines='skip')
 
 @ignore_warnings(category=ConvergenceWarning)
 def generate_model(compare=True):

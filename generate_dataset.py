@@ -9,7 +9,7 @@ folder_path = os.path.join(current_folder, 'datasets')
 file_list = os.listdir(folder_path)
 
 
-filename2 = "dataset_eredivisie_v4.csv"
+filename2 = "dataset_footyf_v1.csv"
 # opening the file with w+ mode truncates the file
 f = open(filename2, "w+")
 f.close()    
@@ -101,7 +101,8 @@ def generate_data(filename):
             match_dataset_cut.loc[index, 'goal_difference_away'] = 0
             match_dataset_cut.loc[index, 'goal_difference_home_per_game'] = 0 #11
             match_dataset_cut.loc[index, 'goal_difference_away_per_game'] = 0
-            
+    
+        print(home_id)
         if result_match > 0:
             print(home_id, gameweek)
             ranking[home_id][1] += 3
