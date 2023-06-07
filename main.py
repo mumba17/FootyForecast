@@ -7,18 +7,21 @@ from compare_models import compare_models
 from load_dataset import load_dataset
 from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.ensemble import RandomForestClassifier
 
-df = load_dataset('england-premier-league-matches-2018-to-2019-stats.csv')
+df = pd.read_csv('dataset_eredivisie_v4.csv', on_bad_lines='skip')
 
 @ignore_warnings(category=ConvergenceWarning)
-def generate_model():
-    X_train, X_test, y_train, y_test = train_test_split(df.drop('label', axis=1), df['label'], test_size=0.2)
+def generate_model(compare=True):
+    X_train, X_test, y_train, y_test = train_test_split(df.iloc[:, :-1], df.iloc[:, -1], test_size=0.2)
+    X_train = X_train.dropna()
+    y_train = y_train.dropna()
     model = LogisticRegression(max_iter=2000)
-    loaded_model = joblib.load('FootyForecast.joblib')
-    cross_val_score(model, X_train, y_train, cv=10)
     model.fit(X_train, y_train)
-    if compare_models(model, loaded_model, X_test, y_test):
-        joblib.dump(model, 'FootyForecast.joblib')
-        
-for _ in range(500):
+    if compare:
+        loaded_model = joblib.load('FootyForecast_NEW.joblib')
+        if compare_models(model, loaded_model, X_test, y_test):
+            joblib.dump(model, 'FootyForecast_NEW.joblib')
+            
+while True:
     generate_model()
