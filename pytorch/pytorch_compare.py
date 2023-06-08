@@ -26,9 +26,6 @@ def compare_models(model1, model2, X_test, y_test):
     model1.eval()
     model2.eval()
 
-    # Convert input data to torch.Tensor
-    X_test = torch.from_numpy(X_test).float()
-
     # Predict labels using both models
     with torch.no_grad():
         y_pred1 = model1(X_test)
@@ -37,8 +34,8 @@ def compare_models(model1, model2, X_test, y_test):
         y_pred2 = torch.argmax(F.softmax(y_pred2, dim=1), dim=1)
 
     # Convert tensors to numpy arrays
-    y_pred1 = y_pred1.numpy()
-    y_pred2 = y_pred2.numpy()
+    y_pred1 = y_pred1.cpu().numpy()
+    y_pred2 = y_pred2.cpu().numpy()
 
     # Calculate evaluation metrics for the first model
     precision1 = precision_score(y_test, y_pred1, average='macro', zero_division=1)
@@ -53,18 +50,18 @@ def compare_models(model1, model2, X_test, y_test):
     accuracy2 = accuracy_score(y_test, y_pred2)
 
     # Print the evaluation metrics for both models
-    # print("")
-    # print("Generated model evaluation metrics:")
-    # print(f"Precision: {precision1:.5f}")
-    # print(f"Recall: {recall1:.5f}")
-    # print(f"F1-score: {f1_score1:.5f}")
-    # print(f"Accuracy: {accuracy1:.5f}")
-    # print("")
-    # print("Saved model evaluation metrics:")
-    # print(f"Precision: {precision2:.5f}")
-    # print(f"Recall: {recall2:.5f}")
-    # print(f"F1-score: {f1_score2:.5f}")
-    # print(f"Accuracy: {accuracy2:.5f}")
+    print("")
+    print("Generated model evaluation metrics:")
+    print(f"Precision: {precision1:.5f}")
+    print(f"Recall: {recall1:.5f}")
+    print(f"F1-score: {f1_score1:.5f}")
+    print(f"Accuracy: {accuracy1:.5f}")
+    print("")
+    print("Saved model evaluation metrics:")
+    print(f"Precision: {precision2:.5f}")
+    print(f"Recall: {recall2:.5f}")
+    print(f"F1-score: {f1_score2:.5f}")
+    print(f"Accuracy: {accuracy2:.5f}")
 
     if f1_score1 > f1_score2:
         print(colored("Replacing the model!", "green"))
