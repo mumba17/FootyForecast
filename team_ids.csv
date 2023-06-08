@@ -10,10 +10,10 @@ id,team
 9,VVV-Venlo
 10,AZ Alkmaar
 11,Vitesse
-12,PSV Eindhoven
+12,Feyenoord
 13,Fortuna Sittard
 14,ADO Den Haag
-15,Feyenoord
+15,PSV Eindhoven
 16,Willem II
 17,Ajax
 18,Utrecht
@@ -62,3 +62,46 @@ id,team
 61,Rayo Vallecano
 62,Real Madrid
 63,Villarreal
+64,Alavés
+65,Granada
+66,Levante
+67,Sampdoria
+68,Milan
+69,Monza
+70,Lecce
+71,Fiorentina
+72,Lazio
+73,Spezia
+74,Salernitana
+75,Hellas Verona
+76,Juventus
+77,Torino
+78,Udinese
+79,Inter
+80,Sassuolo
+81,Empoli
+82,Napoli
+83,Bologna
+84,Atalanta
+85,Roma
+86,Cremonese
+87,Lyon
+88,Strasbourg
+89,Clermont Foot
+90,Toulouse
+91,Lens
+92,Angers
+93,Lille
+94,Montpellier
+95,Rennes
+96,Marseille
+97,Nantes
+98,Monaco
+99,Paris S-G
+100,Ajaccio
+101,Reims
+102,Auxerre
+103,Troyes
+104,Nice
+105,Brest
+106,Lorient

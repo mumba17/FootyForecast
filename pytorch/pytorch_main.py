@@ -4,9 +4,8 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
 from sklearn.model_selection import train_test_split
-from sklearn.utils._testing import ignore_warnings
-from sklearn.exceptions import ConvergenceWarning
 from pytorch_compare import compare_models
+import torch.nn.functional as F
 import torch.cuda
 
 class FootballDataset(Dataset):
@@ -27,9 +26,10 @@ class LogisticRegressionModel(nn.Module):
 
     def forward(self, x):
         out = self.linear(x)
+        out = F.softmax(out, dim=1)
         return out
 
-df = pd.read_csv('dataset_footyf_v1.csv', on_bad_lines='skip')
+df = pd.read_csv('dataset_footyf_v2.csv', on_bad_lines='skip')
 if torch.cuda.is_available():
     print(f"CUDA version: {torch.version.cuda}")
     
@@ -40,7 +40,6 @@ else:
     device = torch.device("cpu")
     print("Running on CPU")    
 
-@ignore_warnings(category=ConvergenceWarning)
 def generate_model(compare=True):
     X_train, X_test, y_train, y_test = train_test_split(df.iloc[:, :-1], df.iloc[:, -1], test_size=0.2)
     X_train = X_train.dropna().values
@@ -57,7 +56,7 @@ def generate_model(compare=True):
 
     # Define the loss function and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.002)
+    optimizer = optim.SGD(model.parameters(), lr=0.001)
 
     # Prepare the training data
     train_dataset = FootballDataset(X_train, y_train)

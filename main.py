@@ -4,7 +4,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_val_score
 from compare_models import compare_models
-from load_dataset import load_dataset
 from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.ensemble import RandomForestClassifier

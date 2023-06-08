@@ -9,7 +9,7 @@ folder_path = os.path.join(current_folder, 'datasets')
 file_list = os.listdir(folder_path)
 
 
-filename2 = "dataset_footyf_v1.csv"
+filename2 = "dataset_footyf_v2.csv"
 # opening the file with w+ mode truncates the file
 f = open(filename2, "w+")
 f.close()    
@@ -20,9 +20,10 @@ def generate_data(filename):
                        'points_per_game_home', 'points_per_game_away', 'home_xG_total', 'away_xG_total', 
                        'home_xG_average', 'away_xG_average', 'btts_home_total', 'btts_away_total', 'btts_home_percentage',
                        'btts_away_percentage', 'points_per_goal_home', 'points_per_goal_away', 'goal_difference_home',
-                       'goal_difference_away', 'goal_difference_home_per_game', 'goal_difference_away_per_game', 'total_xG_combined','total_xG_average_per_game','label']
+                       'goal_difference_away', 'goal_difference_home_per_game', 'goal_difference_away_per_game', 'total_xG_combined',
+                       'total_xG_average_per_game','total_attendance_home','total_attendance_away','label']
     
-    old_columns = ['Wk','Home','xG_home','Score','xG_away','Away']
+    old_columns = ['Wk','Home','xG_home','Score','xG_away','Away', 'Attendance']
     match_dataset = pd.read_csv(filename, on_bad_lines='skip',usecols=old_columns)
     match_dataset_cut = pd.DataFrame(match_dataset, columns=old_columns)
     
@@ -35,7 +36,7 @@ def generate_data(filename):
     if 'team' in team_df.columns:
         ID_team_list = team_df[['id', 'team']].values.tolist()
 
-    ranking = [[team, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] for _, team in ID_team_list]
+    ranking = [[team, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] for _, team in ID_team_list]
 
     value_to_id = {team: id for id, team in ID_team_list}
 
@@ -59,10 +60,19 @@ def generate_data(filename):
         goalsHome,_,goalsAway = list(row['Score'])
         goalsHome = int(goalsHome)
         goalsAway = int(goalsAway)
-        xgHome = int(row['xG_home'])
-        xgAway = int(row['xG_away'])
+        xgHome = float(row['xG_home'])
+        xgAway = float(row['xG_away'])
         gameweek = int(row['Wk'])
         result_match = goalsHome - goalsAway
+        
+        
+        Attendance = row['Attendance']
+        if not pd.isna(Attendance):
+            Attendance = int(Attendance) * 1000
+        else:
+            Attendance = 15000
+        
+        print(row)
         
         home_id = row['Home']
         away_id = row['Away']
@@ -70,12 +80,12 @@ def generate_data(filename):
         # Check if home team ID is present in the ranking list
         if home_id not in [team[0] for team in ranking]:
             # If home team ID is not present, add it dynamically to the ranking list
-            ranking.append([home_id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+            ranking.append([home_id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
         # Check if away team ID is present in the ranking list
         if away_id not in [team[0] for team in ranking]:
             # If away team ID is not present, add it dynamically to the ranking list
-            ranking.append([away_id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+            ranking.append([away_id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
         
         #Init the first week for every stat to be 0 ahead of the game.
         if gameweek == 1:
@@ -103,6 +113,9 @@ def generate_data(filename):
             match_dataset_cut.loc[index, 'goal_difference_away_per_game'] = 0
             match_dataset_cut.loc[index, 'total_xG_combined'] = 0 #12
             match_dataset_cut.loc[index, 'total_xG_average_per_game'] = 0 #13
+            match_dataset_cut.loc[index, 'total_xG_average_per_game'] = 0 
+            match_dataset_cut.loc[index, 'total_attendance_home'] = 0 #14
+            match_dataset_cut.loc[index, 'total_attendance_away'] = 0 
     
         print(home_id)
         if result_match > 0:
@@ -172,6 +185,8 @@ def generate_data(filename):
         
         ranking[home_id][13] = (ranking[home_id][5] + ranking[away_id][5]) / gameweek
         ranking[away_id][13] = (ranking[home_id][5] + ranking[away_id][5]) / gameweek
+        
+        ranking[home_id][14] += Attendance
             
         if gameweek > 1:
             match_dataset_cut.loc[index, 'points_home'] = ranking[home_id][1] 
@@ -198,9 +213,11 @@ def generate_data(filename):
             match_dataset_cut.loc[index, 'goal_difference_away_per_game'] = ranking[away_id][11]
             match_dataset_cut.loc[index, 'total_xG_combined'] = ranking[home_id][12]
             match_dataset_cut.loc[index, 'total_xG_average_per_game'] = ranking[home_id][13]
+            match_dataset_cut.loc[index, 'total_attendance_home'] = ranking[home_id][14]
+            match_dataset_cut.loc[index, 'total_attendance_away'] = ranking[away_id][14]
     
     
-    match_dataset_cut = match_dataset_cut.drop(['xG_home', 'Score', 'xG_away'], axis=1)  
+    match_dataset_cut = match_dataset_cut.drop(['xG_home', 'Score', 'xG_away', 'Attendance'], axis=1)  
     match_dataset_cut['label'] = match_dataset_cut['label'].astype(int)  
     print(match_dataset_cut.tail())
     match_dataset_cut.to_csv(filename2, index=False, mode='a', header=False)

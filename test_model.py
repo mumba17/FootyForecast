@@ -4,7 +4,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_val_score
 from compare_models import compare_models
-from load_dataset import load_dataset
 from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
 import numpy as np
@@ -13,7 +12,7 @@ import random
 model = joblib.load('FootyForecast_NEW.joblib')
 
 # Load the dataset into a pandas DataFrame
-filename = 'dataset_eredivisie_v4.csv'  # Replace with the actual filename
+filename = 'dataset_footyf_v1.csv'  # Replace with the actual filename
 dataset = pd.read_csv(filename)
 
 @ignore_warnings(category=UserWarning)
