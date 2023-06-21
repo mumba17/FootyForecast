@@ -23,19 +23,19 @@ class FootballDataset(Dataset):
 class NeuralNetworkModel(nn.Module):
     def __init__(self, input_size, num_classes):
         super(NeuralNetworkModel, self).__init__()
-        self.fc1 = nn.Linear(input_size, 128)
-        self.fc2 = nn.Linear(128, 128)
-        self.fc3 = nn.Linear(128, 256)
-        self.fc4 = nn.Linear(256, num_classes)
+        self.fc1 = nn.Linear(input_size, 42)
+        self.fc2 = nn.Linear(42, 64)
+        self.fc3 = nn.Linear(64, 16)
+        self.fc4 = nn.Linear(16, num_classes)
 
     def forward(self, x):
-        x = F.relu6(self.fc1(x))
-        x = F.relu6(self.fc2(x))
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
         x = F.relu(self.fc3(x))
-        out = F.softmax(self.fc4(x), dim=1)
+        out = self.fc4(x)
         return out
 
-df = pd.read_csv('dataset_footyf_v2.csv', on_bad_lines='skip')
+df = pd.read_csv('dataset_footyf_v4.csv', on_bad_lines='skip')
 if torch.cuda.is_available():
     print(f"CUDA version: {torch.version.cuda}")
 
@@ -46,9 +46,9 @@ else:
     device = torch.device("cpu")
     print("Running on CPU")
 
-def generate_model(compare=True):
+def generate_model(compare=True, stopped=False):
     global model
-    X_train, X_test, y_train, y_test = train_test_split(df.iloc[:, :-1], df.iloc[:, -1], test_size=0.1)
+    X_train, X_test, y_train, y_test = train_test_split(df.iloc[:, :-1], df.iloc[:, -1], test_size=0.15)
     X_train = X_train.dropna().values
     y_train = y_train.dropna().values
     X_test = X_test.dropna().values  # Convert X_test to a numpy array
@@ -63,15 +63,28 @@ def generate_model(compare=True):
 
     # Define the loss function and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.001)
+    optimizer = optim.SGD(model.parameters(), lr=0.01)
+
+    # Define the early stopping parameters
+    best_loss = float('inf')
+    early_stop_counter = 0
 
     # Prepare the training data
     train_dataset = FootballDataset(X_train, y_train)
-    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+    train_loader = DataLoader(train_dataset, batch_size=512, shuffle=True)
+    
+    # Prepare the validation data
+    val_dataset = FootballDataset(X_test, y_test)
+    val_loader = DataLoader(val_dataset, batch_size=512, shuffle=False)
+
+    # Define the learning rate scheduler
+    patience = 5
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=patience)
 
     # Train the model
     num_epochs = 100
     for epoch in range(num_epochs):
+        # Train for one epoch
         for inputs, labels in train_loader:
             inputs = inputs.to(device)
             labels = labels.to(device)
@@ -80,6 +93,31 @@ def generate_model(compare=True):
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
+
+        # Calculate the validation loss
+        with torch.no_grad():
+            model.eval()
+            val_loss = 0
+            for val_inputs, val_labels in val_loader:
+                val_inputs = val_inputs.to(device)
+                val_labels = val_labels.to(device)
+                val_outputs = model(val_inputs)
+                val_loss += criterion(val_outputs, val_labels).item()
+            val_loss /= len(val_loader)
+
+        # Update the learning rate based on the validation loss
+        scheduler.step(val_loss)
+
+        # Check if validation loss has improved
+        if val_loss < best_loss:
+            best_loss = val_loss
+            early_stop_counter = 0
+            # Save the model checkpoint if desired
+        else:
+            early_stop_counter += 1
+            if early_stop_counter >= patience and not stopped:
+                stopped = True
+                print(f"Early stopping at epoch {epoch}")
 
     X_test_tensor = torch.from_numpy(X_test).float().to(device)
 
@@ -157,5 +195,6 @@ def test_model(First):
     return Total_correct
 
 while True:
+    stopped = False
     generate_model()
-    test_model(First)
+    #test_model(First)
