@@ -10,7 +10,7 @@ count = 0
 count_0 = 0
 
 # Load the dataset into a pandas DataFrame
-filename = 'test_dataset.csv'  # Replace with the actual filename
+filename = 'footy_dataset.csv'  # Replace with the actual filename
 df = pd.read_csv(filename)
 
 class FootballDataset(Dataset):
@@ -27,16 +27,14 @@ class FootballDataset(Dataset):
 class NeuralNetworkModel(nn.Module):
     def __init__(self, input_size, hidden_size, num_classes):
         super(NeuralNetworkModel, self).__init__()
-        self.fc1 = nn.Linear(input_size, 42)
-        self.fc2 = nn.Linear(42, 64)
-        self.fc3 = nn.Linear(64, 16)
-        self.fc4 = nn.Linear(16, num_classes)
+        self.fc1 = nn.Linear(input_size, 56)
+        self.fc2 = nn.Linear(56, 188)
+        self.fc3 = nn.Linear(188, num_classes)
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
-        out = self.fc4(x)
+        out = self.fc3(x)
         return out
     
 def test_model():

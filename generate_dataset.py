@@ -9,7 +9,7 @@ folder_path = os.path.join(current_folder, 'datasets')
 file_list = os.listdir(folder_path)
 
 
-filename2 = "dataset_footyf_v5.csv"
+filename2 = "footy_dataset.csv"
 # opening the file with w+ mode truncates the file
 f = open(filename2, "w+")
 f.close()    
@@ -27,13 +27,19 @@ def generate_data(filename):
     
     old_columns = ['Wk','Home','xG_home','Score','xG_away','Away']
     squad_cols = ['Squad', 'PrgC', 'PrgP', 'MP']
-    misc_cols = ['Squad', 'Recov', ]
+    misc_cols = ['Squad', 'Recov']
+    shooting_cols = ['Squad', 'G/Sh', 'G/SoT', 'np:G-xG']
+    defense_cols = ['Squad', 'Def 3rd', 'Att 3rd', 'Err']
     squad_file = filename.replace(".csv","")+'_squad_stat.csv'
     misc_file = filename.replace(".csv","")+'_squad_misc.csv'
+    shooting_file = filename.replace(".csv","")+'_squad_shooting.csv'
+    defense_file = filename.replace(".csv","")+'_squad_defense.csv'
     match_dataset = pd.read_csv(filename, on_bad_lines='skip',usecols=old_columns)
     match_dataset_cut = pd.DataFrame(match_dataset, columns=old_columns)
     squad_stats = pd.read_csv(squad_file, on_bad_lines='skip', usecols=squad_cols)
     misc_stats = pd.read_csv(misc_file, on_bad_lines='skip', usecols=misc_cols)
+    defense_stats = pd.read_csv(defense_file, on_bad_lines='skip', usecols=defense_cols)
+    shooting_stats = pd.read_csv(shooting_file, on_bad_lines='skip', usecols=shooting_cols)
     
     
     #Adding IDs for every team instead of strings
@@ -44,10 +50,10 @@ def generate_data(filename):
     if 'team' in team_df.columns:
         ID_team_list = team_df[['id', 'team']].values.tolist()
 
-    ranking = [[team, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] for _, team in ID_team_list]
+    ranking = [[team] + [0] * 40 for _, team in ID_team_list]
 
     value_to_id = {team: id for id, team in ID_team_list}
-
+    
     for id, team in enumerate(match_dataset_cut['Home'].unique()):
         if team not in value_to_id:
             new_id = len(value_to_id) + 1
@@ -59,10 +65,25 @@ def generate_data(filename):
         match_dataset_cut['Home'] = match_dataset_cut['Home'].replace(team, home_id)
         match_dataset_cut['Away'] = match_dataset_cut['Away'].replace(team, home_id)
         squad_stats['Squad'] = squad_stats['Squad'].replace(team, home_id)
+        misc_stats['Squad'] = misc_stats['Squad'].replace(team, home_id)
+        defense_stats['Squad'] = defense_stats['Squad'].replace(team, home_id)
+        shooting_stats['Squad'] = shooting_stats['Squad'].replace(team, home_id)
         
     squad_stats['Squad'] = squad_stats['Squad'].astype(int) 
     squad_stats = squad_stats.sort_values(by='Squad', ascending=True)
     squad_stats = squad_stats.set_index('Squad')
+    
+    misc_stats['Squad'] = misc_stats['Squad'].astype(int) 
+    misc_stats = misc_stats.sort_values(by='Squad', ascending=True)
+    misc_stats = misc_stats.set_index('Squad')
+    
+    shooting_stats['Squad'] = shooting_stats['Squad'].astype(int) 
+    shooting_stats = shooting_stats.sort_values(by='Squad', ascending=True)
+    shooting_stats = shooting_stats.set_index('Squad')
+    
+    defense_stats['Squad'] = defense_stats['Squad'].astype(int) 
+    defense_stats = defense_stats.sort_values(by='Squad', ascending=True)
+    defense_stats = defense_stats.set_index('Squad')
 
     team_df = pd.DataFrame.from_dict(value_to_id, orient='index', columns=['id'])
     team_df['team'] = team_df.index  # Add the 'team' column with original team names
@@ -84,12 +105,12 @@ def generate_data(filename):
         # Check if home team ID is present in the ranking list
         if home_id not in [team[0] for team in ranking]:
             # If home team ID is not present, add it dynamically to the ranking list
-            ranking.append([home_id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+            ranking.append([[home_id] + [0] * 40])
 
         # Check if away team ID is present in the ranking list
         if away_id not in [team[0] for team in ranking]:
             # If away team ID is not present, add it dynamically to the ranking list
-            ranking.append([away_id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+            ranking.append([[away_id] + [0] * 40])
         
         #Init the first week for every stat to be 0 ahead of the game.
         if gameweek == 1:
@@ -131,6 +152,20 @@ def generate_data(filename):
             match_dataset_cut.loc[index, 'away_draws'] = 0
             match_dataset_cut.loc[index, 'home_loss'] = 0
             match_dataset_cut.loc[index, 'away_loss'] = 0
+            match_dataset_cut.loc[index, 'home_recoveries'] = 0
+            match_dataset_cut.loc[index, 'away_recoveries'] = 0
+            match_dataset_cut.loc[index, 'home_pressing_tackles'] = 0
+            match_dataset_cut.loc[index, 'away_pressing_tackles'] = 0
+            match_dataset_cut.loc[index, 'home_defensive_tackles'] = 0
+            match_dataset_cut.loc[index, 'away_defensive_tackles'] = 0
+            match_dataset_cut.loc[index, 'home_defensive_errors'] = 0
+            match_dataset_cut.loc[index, 'away_defensive_errors'] = 0
+            match_dataset_cut.loc[index, 'home_goals_per_shot'] = 0
+            match_dataset_cut.loc[index, 'away_goals_per_shot'] = 0
+            match_dataset_cut.loc[index, 'home_goals_per_shot_on_goal'] = 0
+            match_dataset_cut.loc[index, 'away_goals_per_shot_on_goal'] = 0
+            match_dataset_cut.loc[index, 'home_np:G-xG'] = 0
+            match_dataset_cut.loc[index, 'away_np:G-xG'] = 0
     
         if result_match > 0:
             ranking[home_id][1] += 3
@@ -230,7 +265,26 @@ def generate_data(filename):
             ranking[home_id][17] = 0.5
             ranking[away_id][17] = 0.5
             
+        ranking[home_id][21] = misc_stats.loc[home_id, 'Recov'] / squad_stats.loc[home_id, 'MP']
+        ranking[away_id][21] = misc_stats.loc[away_id, 'Recov'] / squad_stats.loc[away_id, 'MP']
         
+        ranking[home_id][22] = defense_stats.loc[home_id, 'Att 3rd'] / squad_stats.loc[home_id, 'MP']
+        ranking[away_id][22] = defense_stats.loc[away_id, 'Att 3rd'] / squad_stats.loc[away_id, 'MP']
+        
+        ranking[home_id][23] = defense_stats.loc[home_id, 'Def 3rd'] / squad_stats.loc[home_id, 'MP']
+        ranking[away_id][23] = defense_stats.loc[away_id, 'Def 3rd'] / squad_stats.loc[away_id, 'MP']
+        
+        ranking[home_id][24] = defense_stats.loc[home_id, 'Err'] / squad_stats.loc[home_id, 'MP']
+        ranking[away_id][24] = defense_stats.loc[away_id, 'Err'] / squad_stats.loc[away_id, 'MP']
+        
+        ranking[home_id][25] = shooting_stats.loc[home_id, 'G/Sh'] / squad_stats.loc[home_id, 'MP']
+        ranking[away_id][25] = shooting_stats.loc[away_id, 'G/Sh'] / squad_stats.loc[away_id, 'MP']
+        
+        ranking[home_id][26] = shooting_stats.loc[home_id, 'G/SoT'] / squad_stats.loc[home_id, 'MP']
+        ranking[away_id][26] = shooting_stats.loc[away_id, 'G/SoT'] / squad_stats.loc[away_id, 'MP']
+        
+        ranking[home_id][27] = shooting_stats.loc[home_id, 'np:G-xG'] / squad_stats.loc[home_id, 'MP']
+        ranking[away_id][27] = shooting_stats.loc[away_id, 'np:G-xG'] / squad_stats.loc[away_id, 'MP']
             
         if gameweek > 1:
             match_dataset_cut.loc[index, 'points_home'] = ranking[home_id][1] 
@@ -271,18 +325,31 @@ def generate_data(filename):
             match_dataset_cut.loc[index, 'away_draws'] = ranking[away_id][19]
             match_dataset_cut.loc[index, 'home_loss'] = ranking[home_id][20]
             match_dataset_cut.loc[index, 'away_loss'] = ranking[away_id][20]
-    
+            match_dataset_cut.loc[index, 'home_recoveries'] = ranking[home_id][21]
+            match_dataset_cut.loc[index, 'away_recoveries'] = ranking[away_id][21]
+            match_dataset_cut.loc[index, 'home_pressing_tackles'] = ranking[home_id][22]
+            match_dataset_cut.loc[index, 'away_pressing_tackles'] = ranking[away_id][22]
+            match_dataset_cut.loc[index, 'home_defensive_tackles'] = ranking[home_id][23]
+            match_dataset_cut.loc[index, 'away_defensive_tackles'] = ranking[away_id][23]
+            match_dataset_cut.loc[index, 'home_defensive_errors'] = ranking[home_id][24]
+            match_dataset_cut.loc[index, 'away_defensive_errors'] = ranking[away_id][24]
+            match_dataset_cut.loc[index, 'home_goals_per_shot'] = ranking[home_id][25]
+            match_dataset_cut.loc[index, 'away_goals_per_shot'] = ranking[away_id][25]
+            match_dataset_cut.loc[index, 'home_goals_per_shot_on_goal'] = ranking[home_id][26]
+            match_dataset_cut.loc[index, 'away_goals_per_shot_on_goal'] = ranking[away_id][26]
+            match_dataset_cut.loc[index, 'home_np:G-xG'] = ranking[home_id][27]
+            match_dataset_cut.loc[index, 'away_np:G-xG'] = ranking[away_id][27]
     
     match_dataset_cut = match_dataset_cut[match_dataset_cut['Wk'] != 1]
     match_dataset_cut = match_dataset_cut.drop(['xG_home', 'Score', 'xG_away'], axis=1)  
     match_dataset_cut['label'] = match_dataset_cut['label'].astype(int)  
     match_dataset_cut.to_csv(filename2, index=False, mode='a', header=False)
-    print(match_dataset_cut.head())
+    print(match_dataset_cut.tail(20))
             
 # Iterate over each file in the folder
 for file_name in file_list:
     # Check if the file has the .csv extension
-    if file_name.endswith('.csv') and not file_name.endswith('squad_stat.csv'):
+    if file_name.endswith('.csv') and not file_name.endswith('squad_stat.csv') and not file_name.endswith('squad_misc.csv') and not file_name.endswith('squad_shooting.csv') and not file_name.endswith('squad_defense.csv'):
         # Construct the full file path
         file_path = os.path.join(folder_path, file_name)
         

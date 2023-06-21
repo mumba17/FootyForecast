@@ -8,6 +8,7 @@ from pytorch_compare import compare_models
 import torch.nn.functional as F
 import torch.cuda
 import random
+import numpy as np
 
 class FootballDataset(Dataset):
     def __init__(self, data, labels):
@@ -23,19 +24,17 @@ class FootballDataset(Dataset):
 class NeuralNetworkModel(nn.Module):
     def __init__(self, input_size, num_classes):
         super(NeuralNetworkModel, self).__init__()
-        self.fc1 = nn.Linear(input_size, 42)
-        self.fc2 = nn.Linear(42, 64)
-        self.fc3 = nn.Linear(64, 16)
-        self.fc4 = nn.Linear(16, num_classes)
+        self.fc1 = nn.Linear(input_size, 56)
+        self.fc2 = nn.Linear(56, 188)
+        self.fc3 = nn.Linear(188, num_classes)
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
-        out = self.fc4(x)
+        out = self.fc3(x)
         return out
 
-df = pd.read_csv('dataset_footyf_v4.csv', on_bad_lines='skip')
+df = pd.read_csv('footy_dataset.csv', on_bad_lines='skip')
 if torch.cuda.is_available():
     print(f"CUDA version: {torch.version.cuda}")
 
@@ -48,11 +47,21 @@ else:
 
 def generate_model(compare=True, stopped=False):
     global model
-    X_train, X_test, y_train, y_test = train_test_split(df.iloc[:, :-1], df.iloc[:, -1], test_size=0.15)
-    X_train = X_train.dropna().values
-    y_train = y_train.dropna().values
-    X_test = X_test.dropna().values  # Convert X_test to a numpy array
-    y_test = y_test.dropna().values  # Convert y_test to a numpy array
+    data = df.dropna()
+    
+    #random_lr = random.uniform(0.001,0.01)
+    random_lr = 0.01
+    
+    print(f'Setting starting learning rate to: {random_lr}')
+
+# Split the non-null data into train and test sets
+    X_train, X_test, y_train, y_test = train_test_split(
+        data.iloc[:, :-1].values,
+        data.iloc[:, -1].values,
+        test_size=0.25
+    )
+    
+    y_test = np.array(y_test)
 
     # Define the neural network model
     input_size = X_train.shape[1]
@@ -63,7 +72,7 @@ def generate_model(compare=True, stopped=False):
 
     # Define the loss function and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.01)
+    optimizer = optim.SGD(model.parameters(), lr=random_lr)
 
     # Define the early stopping parameters
     best_loss = float('inf')
@@ -71,18 +80,18 @@ def generate_model(compare=True, stopped=False):
 
     # Prepare the training data
     train_dataset = FootballDataset(X_train, y_train)
-    train_loader = DataLoader(train_dataset, batch_size=512, shuffle=True)
+    train_loader = DataLoader(train_dataset, batch_size=802, shuffle=True)
     
     # Prepare the validation data
     val_dataset = FootballDataset(X_test, y_test)
-    val_loader = DataLoader(val_dataset, batch_size=512, shuffle=False)
+    val_loader = DataLoader(val_dataset, batch_size=802, shuffle=False)
 
     # Define the learning rate scheduler
     patience = 5
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=patience)
 
     # Train the model
-    num_epochs = 100
+    num_epochs = 250
     for epoch in range(num_epochs):
         # Train for one epoch
         for inputs, labels in train_loader:
@@ -127,6 +136,7 @@ def generate_model(compare=True, stopped=False):
             loaded_model = NeuralNetworkModel(input_size, num_classes)
             loaded_model.load_state_dict(loaded_model_state_dict)
             loaded_model = loaded_model.to(device)
+            
             if compare_models(model, loaded_model, X_test_tensor, y_test):
                 torch.save(model.state_dict(), 'FootyForecast_neural.pt')
         except FileNotFoundError:
@@ -197,4 +207,4 @@ def test_model(First):
 while True:
     stopped = False
     generate_model()
-    #test_model(First)
+    test_model(First)
