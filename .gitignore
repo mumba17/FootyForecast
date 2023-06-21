@@ -6,3 +6,4 @@ england-premier-league-league-2018-to-2019-stats.csv
 dataset_labeled.csv
 __pycache__/load_dataset.cpython-310.pyc
 __pycache__/compare_models.cpython-310.pyc
+__pycache__
