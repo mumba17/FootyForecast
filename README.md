@@ -4,6 +4,8 @@ FootyForecast is a project that aims to create a football match prediction model
 # TODO
 Currently I am working on updating the data with more datasets from FBref, trying to improve the models accuracy through that. I am adding shooting/defending statistics which the dataset currently does not use. 
 
+I must add that the model is not very user-friendly and I will attempt to improve this in the near future.
+
 # Getting Started
 To get started with FootyForecast, you will need to clone the repository to your local machine. You can do this by running the following command:
 
